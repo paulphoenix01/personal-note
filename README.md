@@ -73,6 +73,8 @@ sudo yum install rhosp-director-images rhosp-director-images-ipa
 cd ~/images
 for i in /usr/share/rhosp-director-images/overcloud-full-latest-11.0.tar /usr/share/rhosp-director-images/ironic-python-agent-latest-11.0.tar; do tar -xvf $i; done
 openstack overcloud image upload --image-path /home/stack/images/
+openstack subnet list
+openstack subnet set --dns-nameserver 8.8.8.8 <subnet-uuid>
 ```
 
 Double Check
@@ -93,4 +95,48 @@ total 341460
 -rw-r--r--. 1 root              root              344491465 Mar 31 06:59 agent.ramdisk
 -rw-r--r--. 1 ironic-inspector  ironic-inspector        337 Mar 31 06:23 inspector.ipxe
 
+```
+
+Enable fake PXE (Power Management) for Ironic. Poweron/off will be done manually.
+```
+# sudo vi /etc/ironic/ironic.conf
+# Add fake_pxe to enabled_drivers
+enabled_drivers = .....,fake_pxe
+
+#Restart service
+sudo systemctl restart openstack-ironic-conductor   openstack-ironic-api
+```
+
+```
+#Create instackenv.json, keep no need change MAC (it's fake)
+{
+    "nodes":[
+        {
+            "mac":[
+                "00:50:56:80:de:bb"
+            ],
+            "cpu":"4",
+            "memory":"24576",
+            "disk":"200",
+            "arch":"x86_64",
+            "pm_type":"fake_pxe",
+            "pm_addr":"192.168.250.10"
+        },
+        {
+            "mac":[
+                "00:50:56:80:c8:4b"
+            ],
+            "cpu":"8",
+            "memory":"32768",
+            "disk":"250",
+            "arch":"x86_64",
+            "pm_type":"fake_pxe",
+            "pm_addr":"192.168.250.11"
+        }
+    ]
+}
+
+#####
+openstack overcloud node import ~/instackenv.json
+openstack baremetal node list
 ```
