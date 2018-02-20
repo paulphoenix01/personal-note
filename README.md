@@ -2,6 +2,17 @@
 
 After OS install
 ### On Director
+
+Register Redhat
+```
+sudo subscription-manager register
+sudo subscription-manager list --available --all --matches="*OpenStack*" | grep Pool
+sudo subscription-manager attach --pool=<$Pool_ID>      ### Copy Pool_ID from above
+
+sudo subscription-manager repos --disable=*
+sudo subscription-manager repos --enable=rhel-7-server-rpms --enable=rhel-7-server-extras-rpms --enable=rhel-7-server-rh-common-rpms --enable=rhel-ha-for-rhel-7-server-rpms --enable=rhel-7-server-openstack-11-rpms --enable=rhel-7-server-openstack-11-devtools-rpms
+```
+Add 'stack' user
 ```
 useradd stack
 passwd stack
