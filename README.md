@@ -40,11 +40,11 @@ sudo yum update -y
 sudo reboot
 ```
 
-Configuring Undercloud
+Configuring Undercloud, with 'stack' user
 ```
 sudo yum install -y python-tripleoclient
-cp /usr/share/instack-undercloud/undercloud.conf.sample /usr/stack/undercloud.conf
-# vim /usr/stack/undercloud.conf
+cp /usr/share/instack-undercloud/undercloud.conf.sample ~/undercloud.conf
+# vim ~/undercloud.conf
 local_ip = 192.168.250.5/24
 undercloud_public_vip = 192.168.250.6
 undercloud_admin_vip = 192.168.250.7
