@@ -64,8 +64,33 @@ Run the installation
 openstack undercloud install
 ```
 
-Run Director cmd tools with 'stack' user
+Install Image and DNS with 'stack' user
 ```
 sudo systemctl list-units openstack-*
 source ~/stackrc
+
+sudo yum install rhosp-director-images rhosp-director-images-ipa
+cd ~/images
+for i in /usr/share/rhosp-director-images/overcloud-full-latest-11.0.tar /usr/share/rhosp-director-images/ironic-python-agent-latest-11.0.tar; do tar -xvf $i; done
+openstack overcloud image upload --image-path /home/stack/images/
+```
+
+Double Check
+```
+$ openstack image list
++--------------------------------------+------------------------+
+| ID                                   | Name                   |
++--------------------------------------+------------------------+
+| 765a46af-4417-4592-91e5-a300ead3faf6 | bm-deploy-ramdisk      |
+| 09b40e3d-0382-4925-a356-3a4b4f36b514 | bm-deploy-kernel       |
+| ef793cd0-e65c-456a-a675-63cd57610bd5 | overcloud-full         |
+| 9a51a6cb-4670-40de-b64b-b70f4dd44152 | overcloud-full-initrd  |
+| 4f7e33f4-d617-47c1-b36f-cbe90f132e5d | overcloud-full-vmlinuz |
++--------------------------------------+------------------------+
+$ ls -l /httpboot
+total 341460
+-rwxr-xr-x. 1 root              root                5153184 Mar 31 06:58 agent.kernel
+-rw-r--r--. 1 root              root              344491465 Mar 31 06:59 agent.ramdisk
+-rw-r--r--. 1 ironic-inspector  ironic-inspector        337 Mar 31 06:23 inspector.ipxe
+
 ```
