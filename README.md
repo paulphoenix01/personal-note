@@ -59,3 +59,13 @@ inspection_iprange = 192.168.250.130,192.168.250.150
 generate_service_certificate = true
 certificate_generation_ca = local
 ```
+Run the installation
+```
+openstack undercloud install
+```
+
+Run Director cmd tools with 'stack' user
+```
+sudo systemctl list-units openstack-*
+source ~/stackrc
+```
