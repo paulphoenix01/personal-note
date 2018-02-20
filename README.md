@@ -43,7 +43,19 @@ sudo reboot
 Configuring Undercloud
 ```
 sudo yum install -y python-tripleoclient
-cp /usr/share/instack-undercloud/undercloud.conf.sample ~/usr/stack/undercloud.conf
-# Add the following config
-
+cp /usr/share/instack-undercloud/undercloud.conf.sample /usr/stack/undercloud.conf
+# vim /usr/stack/undercloud.conf
+local_ip = 192.168.250.5/24
+undercloud_public_vip = 192.168.250.6
+undercloud_admin_vip = 192.168.250.7
+local_interface = eth1
+masquerade_network = 192.168.250.0/24
+dhcp_start = 192.168.250.10
+dhcp_end = 192.168.126.50
+enable_ui = true
+network_cidr = 192.168.250.0/24
+network_gateway = 192.168.250.5
+inspection_iprange = 192.168.250.130,192.168.250.150
+generate_service_certificate = true
+certificate_generation_ca = local
 ```
