@@ -10,7 +10,7 @@ sudo subscription-manager list --available --all --matches="*OpenStack*" | grep 
 sudo subscription-manager attach --pool=<$Pool_ID>      ### Copy Pool_ID from above
 
 sudo subscription-manager repos --disable=*
-sudo subscription-manager repos --enable=rhel-7-server-rpms --enable=rhel-7-server-extras-rpms --enable=rhel-7-server-rh-common-rpms --enable=rhel-ha-for-rhel-7-server-rpms --enable=rhel-7-server-openstack-11-rpms --enable=rhel-7-server-openstack-11-devtools-rpms
+sudo subscription-manager repos --enable=rhel-7-server-rpms --enable=rhel-7-server-extras-rpms --enable=rhel-7-server-rh-common-rpms --enable=rhel-ha-for-rhel-7-server-rpms --enable=rhel-7-server-openstack-11-rpms
 ```
 Add 'stack' user
 ```
@@ -51,7 +51,7 @@ undercloud_admin_vip = 192.168.250.7
 local_interface = eth1
 masquerade_network = 192.168.250.0/24
 dhcp_start = 192.168.250.10
-dhcp_end = 192.168.126.50
+dhcp_end = 192.168.250.50
 enable_ui = true
 network_cidr = 192.168.250.0/24
 network_gateway = 192.168.250.5
