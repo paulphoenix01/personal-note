@@ -34,3 +34,16 @@ sudo hostnamectl set-hostname --transient undercloud.jnpr.net
 # vim /etc/hosts
 192.168.250.5   undercloud.jnpr.net
 ```
+Update and Reboot
+```
+sudo yum update -y
+sudo reboot
+```
+
+Configuring Undercloud
+```
+sudo yum install -y python-tripleoclient
+cp /usr/share/instack-undercloud/undercloud.conf.sample ~/usr/stack/undercloud.conf
+# Add the following config
+
+```
