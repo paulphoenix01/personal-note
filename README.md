@@ -136,7 +136,19 @@ sudo systemctl restart openstack-ironic-conductor   openstack-ironic-api
     ]
 }
 
-#####
-openstack overcloud node import ~/instackenv.json
-openstack baremetal node list
+```
+```
+# openstack overcloud node import ~/instackenv.json
+Started Mistral Workflow tripleo.baremetal.v1.register_or_update. Execution ID: 7775657a-3b82-4a62-b5a1-6f77e32e7591
+Waiting for messages on queue '989fdf89-6963-458e-b599-4e8455317c1f' with no timeout.
+Successfully registered node UUID b4d8d83b-c667-431e-ae97-8bf6b7eb4500
+Successfully registered node UUID b909e770-12d4-4a03-b0af-4765fb231d7e
+
+# openstack baremetal node list
++--------------------------------------+------+---------------+-------------+--------------------+-------------+
+| UUID                                 | Name | Instance UUID | Power State | Provisioning State | Maintenance |
++--------------------------------------+------+---------------+-------------+--------------------+-------------+
+| b4d8d83b-c667-431e-ae97-8bf6b7eb4500 | None | None          | None        | manageable         | False       |
+| b909e770-12d4-4a03-b0af-4765fb231d7e | None | None          | None        | manageable         | False       |
++--------------------------------------+------+---------------+-------------+--------------------+-------------+
 ```
