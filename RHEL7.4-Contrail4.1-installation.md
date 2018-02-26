@@ -178,6 +178,8 @@ ssh-copy-id -i ~/.ssh/id_rsa.pub root@192.168.122.1
 ```
 On 'stack' user on Undercloud
 ```
+ssh-copy-id -i ~/.ssh/id_rsa.pub root@192.168.122.1
+
 #vim create-instackenv.sh
 jq . << EOF > ~/instackenv.json
 {
@@ -273,7 +275,20 @@ chmod 700 create-instackenv.sh
 ./create-instackenv.sh
 
 source stackrc
-openstack baremetal import --json ~/instackenv.json
+### Dont use baremetal import, it wont work.
+# openstack overcloud node import instackenv.json -v
+START with options: [u'overcloud', u'node', u'import', u'instackenv.json', u'-v']
+command: overcloud node import -> tripleoclient.v1.overcloud_node.ImportNode
+Using auth plugin: password
+Started Mistral Workflow tripleo.baremetal.v1.register_or_update. Execution ID: 8bfae3a9-7427-4909-b4c0-efa3887ccc45
+Waiting for messages on queue 'df197b71-e903-4374-99a5-c6d491398957' with no timeout.
+Successfully registered node UUID 8c3ae5bd-841e-42be-9b66-749898de6868
+Successfully registered node UUID 7b8b699d-716f-47b4-8a6d-6b51617da8e8
+Successfully registered node UUID 19d10dfc-4255-47db-a6e1-71fc69084c68
+Successfully registered node UUID 09a19dd2-a52d-4207-b517-cc2211c46cad
+Successfully registered node UUID 0eee68e2-f4ae-4587-bca2-6346312b8d8c
+END return value: 0
+
 ```
 # openstack overcloud node import ~/instackenv.json
 Started Mistral Workflow tripleo.baremetal.v1.register_or_update. Execution ID: 7775657a-3b82-4a62-b5a1-6f77e32e7591
