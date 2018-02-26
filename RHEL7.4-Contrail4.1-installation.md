@@ -331,3 +331,37 @@ Introspection for UUID ee5352b0-ce8a-4d5f-b576-b1f6fdf18d0b finished successfull
 Introspection completed.
 ```
 
+
+Create OpenStack Flavor
+```
+#Delete old compute/controller flavor first. Change flavor as desired.
+openstack flavor delete compute
+openstack flavor delete control
+
+# vim node-profile.sh
+for i in compute control contrail-controller contrail-analytics contrail-database
+contrail-analytics-database; do
+  openstack flavor create $i --ram 8192 --vcpus 4 --disk 50;
+  openstack flavor set --property "cpu_arch"="x86_64" --property"capabilities:boot_option"="local" --property "capabilities:profile"="${i}" ${i};
+done
+
+#Run the script.
+#openstack flavor list
++--------------------------------------+-----------------------------------------+------+------+-----------+-------+-----------+
+| ID                                   | Name                                    |  RAM | Disk | Ephemeral | VCPUs | Is Public |
++--------------------------------------+-----------------------------------------+------+------+-----------+-------+-----------+
+| 10c5be43-e4ae-4b1e-ac5c-97d67b900d64 | compute                                 | 8192 |   50 |         0 |     4 | True      |
+| 25b489d3-791c-412e-9968-b8009a04c601 | block-storage                           | 4096 |   40 |         0 |     1 | True      |
+| 2ad8a937-0ed4-4423-84d3-f7445d80a873 | ceph-storage                            | 4096 |   40 |         0 |     1 | True      |
+| 47c10143-845f-4576-a88e-31b52884cd29 | contrail-analytics                      | 8192 |   50 |         0 |     4 | True      |
+| 4ed838b6-18b3-481b-ae5e-cc5a18ca2b24 | /usr/share/rhosp-director-images        | 8192 |   50 |         0 |     4 | True      |
+|                                      | /ironic-python-agent-latest-11.0.tar    |      |      |           |       |           |
+| 6967b7a3-f5a9-4fdc-8f71-2c51b76c26f1 | contrail-analytics-database             | 8192 |   50 |         0 |     4 | True      |
+| 704d8524-b190-4e96-b284-e09e31de712c | control                                 | 8192 |   50 |         0 |     4 | True      |
+| 7425cc76-2fe8-44f9-b609-677b208412a3 | contrail-database                       | 8192 |   50 |         0 |     4 | True      |
+| c3c74956-5419-444a-84f1-517f9c9fe6dc | contrail-controller                     | 8192 |   50 |         0 |     4 | True      |
+| c6ede8c5-ab0e-4a09-a942-6d3a7c7c956d | swift-storage                           | 4096 |   40 |         0 |     1 | True      |
+| eb95ea01-41c3-4ee0-8bdf-0920dd51531c | baremetal                               | 4096 |   40 |         0 |     1 | True      |
++--------------------------------------+-----------------------------------------+------+------+-----------+-------+-----------+
+
+
