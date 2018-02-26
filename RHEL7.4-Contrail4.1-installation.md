@@ -318,5 +318,16 @@ for node in $(openstack baremetal node list -c UUID -f value) ; do openstack bar
 ```
 openstack overcloud node introspect --all-manageable --provide
 #Watch virt-manager, VM should be powered on and executing boot sequence thru PXE
+
+[stack@undercloud ~]$ openstack overcloud node introspect --all-manageable --provide
+Started Mistral Workflow tripleo.baremetal.v1.introspect_manageable_nodes. Execution ID: 3afd8d05-8224-4372-8cde-62256beccd4f
+Waiting for introspection to finish...
+Waiting for messages on queue '5e3589be-48b5-409d-a4c3-d67e430c49c2' with no timeout.
+Introspection for UUID 1e058c87-4314-4e72-9363-e0fac58d04e8 finished successfully.
+Introspection for UUID 5e221c67-0c73-455f-bac5-fabbfc09adfd finished successfully.
+Introspection for UUID f98ea941-dfad-485b-8676-93e6661a1c57 finished successfully.
+Introspection for UUID a9b39c4e-a7f8-4064-b432-2845fd3ecea5 finished successfully.
+Introspection for UUID ee5352b0-ce8a-4d5f-b576-b1f6fdf18d0b finished successfully.
+Introspection completed.
 ```
 
