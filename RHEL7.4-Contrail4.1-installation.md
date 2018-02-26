@@ -11,6 +11,8 @@ sudo subscription-manager attach --pool=<$Pool_ID>      ### Copy Pool_ID from ab
 
 sudo subscription-manager repos --disable=*
 sudo subscription-manager repos --enable=rhel-7-server-rpms --enable=rhel-7-server-extras-rpms --enable=rhel-7-server-rh-common-rpms --enable=rhel-ha-for-rhel-7-server-rpms --enable=rhel-7-server-openstack-11-rpms
+
+yum install -y net-tools vim
 ```
 Add 'stack' user
 ```
@@ -34,6 +36,34 @@ sudo hostnamectl set-hostname --transient undercloud.jnpr.net
 # vim /etc/hosts
 192.168.250.5   undercloud.jnpr.net
 ```
+Set static IP and gw
+```
+# vim /etc/resolv.conf
+search jnpr.net
+nameserver 192.168.122.1
+
+# vim /etc/sysconfig/network-scripts/ifcfg-eth0
+<...>
+TYPE="Ethernet"
+BOOTPROTO="none"
+NAME="eth0"
+DEVICE="eth0"
+ONBOOT="yes"
+IPADDR=192.168.122.111
+NETMASK=255.255.255.0
+GATEWAY=192.168.122.1
+
+# vim /etc/sysconfig/network-scripts/ifcfg-eth1
+<...>
+TYPE=Ethernet
+BOOTPROTO=none
+NAME=eth1
+DEVICE=eth1
+ONBOOT=yes
+IPADDR=192.168.250.1
+NETMASK=255.255.255.0
+```
+
 Update and Reboot
 ```
 sudo yum update -y
@@ -43,9 +73,12 @@ sudo reboot
 Configuring Undercloud, with 'stack' user
 ```
 sudo yum install -y python-tripleoclient
+
+su - stack
 cp /usr/share/instack-undercloud/undercloud.conf.sample ~/undercloud.conf
 # vim ~/undercloud.conf
-local_ip = 192.168.250.5/24
+[DEFAULT]
+local_ip = 192.168.250.1/24
 undercloud_public_vip = 192.168.250.6
 undercloud_admin_vip = 192.168.250.7
 local_interface = eth1
@@ -54,7 +87,7 @@ dhcp_start = 192.168.250.10
 dhcp_end = 192.168.250.50
 enable_ui = true
 network_cidr = 192.168.250.0/24
-network_gateway = 192.168.250.5
+network_gateway = 192.168.250.1
 inspection_iprange = 192.168.250.130,192.168.250.150
 generate_service_certificate = true
 certificate_generation_ca = local
