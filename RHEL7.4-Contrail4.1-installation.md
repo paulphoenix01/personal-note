@@ -295,8 +295,7 @@ END return value: 0
 Perform introspection on baremetal node list
 ```
 openstack baremetal configure boot
-for node in $(openstack baremetal node list -c UUID -f value) ; do openstack
-baremetal node manage $node ; done
+for node in $(openstack baremetal node list -c UUID -f value) ; do openstack baremetal node manage $node ; done
 ```
 ```
 [stack@undercloud ~]$ openstack baremetal node list
