@@ -138,7 +138,7 @@ for i in compute control contrail-controller contrail-analytics contrail-analyti
 do
   num=$(expr $num + 1)
   sudo qemu-img create -f qcow2 /var/lib/libvirt/images/${i}_${num}.qcow2 40G
-  sudo virt-install --name ${i}_$num --disk /var/lib/libvirt/images/${i}_${num}.qcow2 --vcpus=4 --ram=16348 --network network=br0,model=virtio --network network=br1,model=virtio --virt-type kvm --import --os-variant rhel7 --serial pty --console pty,target_type=virtio --print-xml > ${i}_$num.xml
+  sudo virt-install --name ${i}_$num --disk /var/lib/libvirt/images/${i}_${num}.qcow2 --vcpus=4 --ram=16348 --network network=br0,model=virtio --network network=default,model=virtio --virt-type kvm --import --os-variant rhel7 --serial pty --console pty,target_type=virtio --print-xml > ${i}_$num.xml
   virsh define ${i}_$num.xml
 done
 ```
