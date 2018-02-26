@@ -159,7 +159,7 @@ chmod 700 *.sh
 scp ironic_list.txt stack@192.168.122.111:~/.
 ```
 
-
+######
 (Skip for now) Enable fake PXE (Power Management) for Ironic. Poweron/off will be done manually.
 ```
 # sudo vi /etc/ironic/ironic.conf
@@ -169,9 +169,11 @@ enabled_drivers = .....,fake_pxe
 #Restart service
 sudo systemctl restart openstack-ironic-conductor   openstack-ironic-api
 ```
+######
+
 
 ```
-#Create instackenv.json
+#vim create-instackenv.sh
 jq . << EOF > ~/instackenv.json
 {
   "ssh-user": "root",
@@ -259,48 +261,12 @@ jq . << EOF > ~/instackenv.json
   ] 
 } 
 EOF
-
-
-
-###
-{
-    "arch": "x86_64",
-    "host-ip": "192.168.122.1"
-    "power_manager": "nova.virt.baremetal.virtual_power_driver.VirtualPowerManager",
-    "seed-ip": "",
-    "ssh-user":"root",
-    "ssh-key":"-----BEGIN RSA PRIVATE KEY-----\nMIICXQIBAAKBgQDUVBLtq2JiMvBm/+YpXfihsFUlowSp+StP7oXX/tmWsz1jicaB\nyhg1eVgBc3F6fngGVdQaDex90uTqNuy1LXUatp5Hwtns+ay4d1VNWfITHGcuFBk6\nkIREC+ySTiMrkDYNdBIIZrmpTkbXMxf58fwtFWeyn8/kNXbOr2jHmQcL2QIDAQAB\nAoGAVkocry45e4MMJC/XT/R6uOs6j2Mi4Bj9OyzKhC90KkSJrEwvuktxbznzRBOw\niIGhMaHr4vLJq5DrqyvLIw5oSkbVHHP1VjpvIpQRaU61PaWNsdVPue3NC7/kt124\nb4lLrV5RMjq+VqM4O2UP0xcTfQ0p3rgC0fhvH/WpL28w+GkCQQD8mXu2yTTonOg6\nAZ003xmi1DBBvD4q5RYhSqOJpQCvNd7JJsorXwI8Bi1tMvw7QDWk4osK+s7XfWuF\nufpWC8/rAkEA1y/Ol/UEHgFd59IWwkxaeCOFIGpB6fKEjExRcBWKdgKPRBsfqr/G\nQZKWiXt9o0suRy4+/y50NDq0h09J50zmSwJBAIMN1qPlDHBLSCkgQUH3JkPWtxrD\n4bU7mhm3sdVuKEa/OlE+sNGDv5MI2XS4aSkMjUh4yQ7vRXWD+s8syHbwNfUCQQDB\n639OSauwLqMlqpp/9rcA1WG/WIKWBcuVc6FgVMk2mA/r3FWpVrGfni6zLuqGIdZO\np0p2RLLL7quJ1NZQ72gJAkBeIk8d85rCp1DXV+W9hkEnwlbJO9SJY/KSc9+qC2ih\nPTROtWPGAR8DpeTZbKWGsAPVAuIEjVa63LzMKoH2G+PP\n-----END RSA PRIVATE KEY-----\n",
-    "nodes":[
-        {
-            "mac":[
-                "00:50:56:80:de:bb"
-            ],
-            "name":"compute_1",
-            "capabilities":"profile:compute",
-            "cpu":"4",
-            "memory":"16384",
-            "disk":"50",
-            "arch":"x86_64",
-            "pm_type":"pxe_ssh",
-            "pm_user":"root",
-            
-            "pm_addr":"192.168.122.1"
-        },
-        {
-            "mac":[
-                "00:50:56:80:c8:4b"
-            ],
-            "cpu":"8",
-            "memory":"32768",
-            "disk":"250",
-            "arch":"x86_64",
-            "pm_type":"fake_pxe",
-            "pm_addr":"192.168.250.11"
-        }
-    ]
-}
-
 ```
+Run the create-instackenv and import to overcloud
+```
+chmod 700 create-instackenv.sh
+./create-instackenv.sh
+openstack baremetal import --json ~/instackenv.json
 ```
 # openstack overcloud node import ~/instackenv.json
 Started Mistral Workflow tripleo.baremetal.v1.register_or_update. Execution ID: 7775657a-3b82-4a62-b5a1-6f77e32e7591
