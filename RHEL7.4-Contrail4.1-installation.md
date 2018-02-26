@@ -267,10 +267,12 @@ jq . << EOF > ~/instackenv.json
 } 
 EOF
 ```
-Run the create-instackenv and import to overcloud
+Run the create-instackenv and import to overcloud. Dont forget #source stackrc
 ```
 chmod 700 create-instackenv.sh
 ./create-instackenv.sh
+
+source stackrc
 openstack baremetal import --json ~/instackenv.json
 ```
 # openstack overcloud node import ~/instackenv.json
