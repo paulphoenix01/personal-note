@@ -273,8 +273,9 @@ Run the create-instackenv and import to overcloud. Dont forget #source stackrc
 ```
 chmod 700 create-instackenv.sh
 ./create-instackenv.sh
-
 source stackrc
+```
+```
 ### Dont use baremetal import, it wont work.
 # openstack overcloud node import instackenv.json -v
 START with options: [u'overcloud', u'node', u'import', u'instackenv.json', u'-v']
@@ -290,17 +291,33 @@ Successfully registered node UUID 0eee68e2-f4ae-4587-bca2-6346312b8d8c
 END return value: 0
 
 ```
-# openstack overcloud node import ~/instackenv.json
-Started Mistral Workflow tripleo.baremetal.v1.register_or_update. Execution ID: 7775657a-3b82-4a62-b5a1-6f77e32e7591
-Waiting for messages on queue '989fdf89-6963-458e-b599-4e8455317c1f' with no timeout.
-Successfully registered node UUID b4d8d83b-c667-431e-ae97-8bf6b7eb4500
-Successfully registered node UUID b909e770-12d4-4a03-b0af-4765fb231d7e
 
-# openstack baremetal node list
-+--------------------------------------+------+---------------+-------------+--------------------+-------------+
-| UUID                                 | Name | Instance UUID | Power State | Provisioning State | Maintenance |
-+--------------------------------------+------+---------------+-------------+--------------------+-------------+
-| b4d8d83b-c667-431e-ae97-8bf6b7eb4500 | None | None          | None        | manageable         | False       |
-| b909e770-12d4-4a03-b0af-4765fb231d7e | None | None          | None        | manageable         | False       |
-+--------------------------------------+------+---------------+-------------+--------------------+-------------+
+Perform introspection on baremetal node list
 ```
+openstack baremetal configure boot
+for node in $(openstack baremetal node list -c UUID -f value) ; do openstack
+baremetal node manage $node ; done
+```
+```
+[stack@undercloud ~]$ openstack baremetal node list
++-------------------------------+------------------------------+---------------+-------------+--------------------+-------------+
+| UUID                          | Name                         | Instance UUID | Power State | Provisioning State | Maintenance |
++-------------------------------+------------------------------+---------------+-------------+--------------------+-------------+
+| a9b39c4e-                     | compute_1                    | None          | power off   | manageable         | False       |
+| a7f8-4064-b432-2845fd3ecea5   |                              |               |             |                    |             |
+| 5e221c67-0c73-455f-           | control_2                    | None          | power off   | manageable         | False       |
+| bac5-fabbfc09adfd             |                              |               |             |                    |             |
+| 1e058c87-4314-4e72-9363-e0fac | contrail-controller_3        | None          | power off   | manageable         | False       |
+| 58d04e8                       |                              |               |             |                    |             |
+| ee5352b0-ce8a-                | contrail-analytics_4         | None          | power off   | manageable         | False       |
+| 4d5f-b576-b1f6fdf18d0b        |                              |               |             |                    |             |
+| f98ea941-dfad-                | contrail-analyticsdatabase_5 | None          | power off   | manageable         | False       |
+| 485b-8676-93e6661a1c57        |                              |               |             |                    |             |
++-------------------------------+------------------------------+---------------+-------------+--------------------+-------------+
+```
+
+```
+openstack overcloud node introspect --all-manageable --provide
+#Watch virt-manager, VM should be powered on and executing boot sequence thru PXE
+```
+
