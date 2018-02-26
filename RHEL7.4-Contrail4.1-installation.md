@@ -130,7 +130,7 @@ total 341460
 
 ```
 
-On KVM Host, provision contrail-vm
+###On KVM Host, provision contrail-vm
 ```
 # vim define-contrail-vm.sh
 num=0
@@ -171,7 +171,12 @@ sudo systemctl restart openstack-ironic-conductor   openstack-ironic-api
 ```
 ######
 
-
+Back to Undercloud VM, on root.
+Copy SSH key
+```
+ssh-copy-id -i ~/.ssh/id_rsa.pub root@192.168.122.1
+```
+On 'stack' user on Undercloud
 ```
 #vim create-instackenv.sh
 jq . << EOF > ~/instackenv.json
