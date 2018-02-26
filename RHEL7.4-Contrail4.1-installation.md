@@ -130,7 +130,37 @@ total 341460
 
 ```
 
-Enable fake PXE (Power Management) for Ironic. Poweron/off will be done manually.
+On KVM Host, provision contrail-vm
+```
+# vim define-contrail-vm.sh
+num=0
+for i in compute control contrail-controller contrail-analytics contrail-analyticsdatabase
+do
+  num=$(expr $num + 1)
+  sudo qemu-img create -f qcow2 /var/lib/libvirt/images/${i}_${num}.qcow2 40G
+  sudo virt-install --name ${i}_$num --disk /var/lib/libvirt/images/${i}_${num}.qcow2 --vcpus=4 --ram=16348 --network network=br0,model=virtio --network network=br1,model=virtio --virt-type kvm --import --os-variant rhel7 --serial pty --console pty,target_type=virtio --print-xml > ${i}_$num.xml
+  virsh define ${i}_$num.xml
+done
+```
+```
+# vim get-ironic-list.sh
+for i in compute control contrail-controller contrail-analytics contrail-analyticsdatabase
+do
+  num=$(expr $num + 1)
+  prov_mac=`virsh domiflist ${i}_${num}|grep br0|awk '{print $5}'`
+  echo ${prov_mac} ${i}_${num} ${i} >> ironic_list.txt
+done
+```
+Execute and copy to undercloud
+```
+chmod 700 *.sh
+./define-contrail-vm.sh
+./get-ironic-list.sh
+scp ironic_list.txt stack@192.168.122.111:~/.
+```
+
+
+(Skip for now) Enable fake PXE (Power Management) for Ironic. Poweron/off will be done manually.
 ```
 # sudo vi /etc/ironic/ironic.conf
 # Add fake_pxe to enabled_drivers
@@ -141,19 +171,120 @@ sudo systemctl restart openstack-ironic-conductor   openstack-ironic-api
 ```
 
 ```
-#Create instackenv.json, keep no need change MAC (it's fake)
+#Create instackenv.json
+jq . << EOF > ~/instackenv.json
 {
+  "ssh-user": "root",
+  "ssh-key": "$(awk '{printf "%s\\n", $0}' ~/.ssh/id_rsa)",
+  "power_manager": "nova.virt.baremetal.virtual_power_driver.VirtualPowerManager",
+  "host-ip": "192.168.122.1",
+  "arch": "x86_64",
+  "nodes": [
+    {
+      "mac": [
+        "$(sed -n 1p ironic_list.txt  | awk '{print $1}')"
+      ],
+      "name":"$(sed -n 1p ironic_list.txt  | awk '{print $2}')",
+      "capabilities":"profile:$(sed -n 1p ironic_list.txt  | awk '{print $3}')",
+      "cpu": "4",
+      "memory": "8192",
+      "disk": "50",
+      "arch": "x86_64",
+      "pm_addr": "192.168.122.1",
+      "pm_password": "$(awk '{printf "%s\\n", $0}' ~/.ssh/id_rsa)",
+      "pm_type": "pxe_ssh",
+      "pm_user": "root"
+    },
+    {
+      "mac": [
+        "$(sed -n 2p ironic_list.txt  | awk '{print $1}')"
+      ],
+      "name":"$(sed -n 2p ironic_list.txt  | awk '{print $2}')",
+      "capabilities":"profile:$(sed -n 2p ironic_list.txt  | awk '{print $3}')",
+      "cpu": "4",
+      "memory": "8192",
+      "disk": "50",
+      "arch": "x86_64",
+      "pm_addr": "192.168.122.1",
+      "pm_password": "$(awk '{printf "%s\\n", $0}' ~/.ssh/id_rsa)",
+      "pm_type": "pxe_ssh",
+      "pm_user": "root"
+    },
+    {
+      "mac": [
+        "$(sed -n 3p ironic_list.txt  | awk '{print $1}')"
+      ],
+      "name":"$(sed -n 3p ironic_list.txt  | awk '{print $2}')",
+      "capabilities":"profile:$(sed -n 3p ironic_list.txt  | awk '{print $3}')",
+      "cpu": "4",
+      "memory": "8192",
+      "disk": "50",
+      "arch": "x86_64",
+      "pm_addr": "192.168.122.1",
+      "pm_password": "$(awk '{printf "%s\\n", $0}' ~/.ssh/id_rsa)",
+      "pm_type": "pxe_ssh",
+      "pm_user": "root"
+    },
+    {
+      "mac": [
+        "$(sed -n 4p ironic_list.txt  | awk '{print $1}')"
+      ],
+      "name":"$(sed -n 4p ironic_list.txt  | awk '{print $2}')",
+      "capabilities":"profile:$(sed -n 4p ironic_list.txt  | awk '{print $3}')",
+      "cpu": "4",
+      "memory": "8192",
+      "disk": "50",
+      "arch": "x86_64",
+      "pm_addr": "192.168.122.1",
+      "pm_password": "$(awk '{printf "%s\\n", $0}' ~/.ssh/id_rsa)",
+      "pm_type": "pxe_ssh",
+      "pm_user": "root"
+    },
+    {
+      "mac": [
+        "$(sed -n 5p ironic_list.txt  | awk '{print $1}')"
+      ],
+      "name":"$(sed -n 5p ironic_list.txt  | awk '{print $2}')",
+      "capabilities":"profile:$(sed -n 5p ironic_list.txt  | awk '{print $3}')",
+      "cpu": "4",
+      "memory": "8192",
+      "disk": "50",
+      "arch": "x86_64",
+      "pm_addr": "192.168.122.1",
+      "pm_password": "$(awk '{printf "%s\\n", $0}' ~/.ssh/id_rsa)",
+      "pm_type": "pxe_ssh",
+      "pm_user": "root"
+    }
+    
+  ] 
+} 
+EOF
+
+
+
+###
+{
+    "arch": "x86_64",
+    "host-ip": "192.168.122.1"
+    "power_manager": "nova.virt.baremetal.virtual_power_driver.VirtualPowerManager",
+    "seed-ip": "",
+    "ssh-user":"root",
+    "ssh-key":"-----BEGIN RSA PRIVATE KEY-----\nMIICXQIBAAKBgQDUVBLtq2JiMvBm/+YpXfihsFUlowSp+StP7oXX/tmWsz1jicaB\nyhg1eVgBc3F6fngGVdQaDex90uTqNuy1LXUatp5Hwtns+ay4d1VNWfITHGcuFBk6\nkIREC+ySTiMrkDYNdBIIZrmpTkbXMxf58fwtFWeyn8/kNXbOr2jHmQcL2QIDAQAB\nAoGAVkocry45e4MMJC/XT/R6uOs6j2Mi4Bj9OyzKhC90KkSJrEwvuktxbznzRBOw\niIGhMaHr4vLJq5DrqyvLIw5oSkbVHHP1VjpvIpQRaU61PaWNsdVPue3NC7/kt124\nb4lLrV5RMjq+VqM4O2UP0xcTfQ0p3rgC0fhvH/WpL28w+GkCQQD8mXu2yTTonOg6\nAZ003xmi1DBBvD4q5RYhSqOJpQCvNd7JJsorXwI8Bi1tMvw7QDWk4osK+s7XfWuF\nufpWC8/rAkEA1y/Ol/UEHgFd59IWwkxaeCOFIGpB6fKEjExRcBWKdgKPRBsfqr/G\nQZKWiXt9o0suRy4+/y50NDq0h09J50zmSwJBAIMN1qPlDHBLSCkgQUH3JkPWtxrD\n4bU7mhm3sdVuKEa/OlE+sNGDv5MI2XS4aSkMjUh4yQ7vRXWD+s8syHbwNfUCQQDB\n639OSauwLqMlqpp/9rcA1WG/WIKWBcuVc6FgVMk2mA/r3FWpVrGfni6zLuqGIdZO\np0p2RLLL7quJ1NZQ72gJAkBeIk8d85rCp1DXV+W9hkEnwlbJO9SJY/KSc9+qC2ih\nPTROtWPGAR8DpeTZbKWGsAPVAuIEjVa63LzMKoH2G+PP\n-----END RSA PRIVATE KEY-----\n",
     "nodes":[
         {
             "mac":[
                 "00:50:56:80:de:bb"
             ],
+            "name":"compute_1",
+            "capabilities":"profile:compute",
             "cpu":"4",
-            "memory":"24576",
-            "disk":"200",
+            "memory":"16384",
+            "disk":"50",
             "arch":"x86_64",
-            "pm_type":"fake_pxe",
-            "pm_addr":"192.168.250.10"
+            "pm_type":"pxe_ssh",
+            "pm_user":"root",
+            
+            "pm_addr":"192.168.122.1"
         },
         {
             "mac":[
