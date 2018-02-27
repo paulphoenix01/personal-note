@@ -320,6 +320,8 @@ for node in $(openstack baremetal node list -c UUID -f value) ; do openstack bar
 ```
 openstack overcloud node introspect --all-manageable --provide
 #Watch virt-manager, VM should be powered on and executing boot sequence thru PXE
+[Imgur](https://i.imgur.com/E53CZ2W.png)
+
 
 [stack@undercloud ~]$ openstack overcloud node introspect --all-manageable --provide
 Started Mistral Workflow tripleo.baremetal.v1.introspect_manageable_nodes. Execution ID: 3afd8d05-8224-4372-8cde-62256beccd4f
