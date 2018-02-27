@@ -319,10 +319,9 @@ for node in $(openstack baremetal node list -c UUID -f value) ; do openstack bar
 
 ```
 openstack overcloud node introspect --all-manageable --provide
-#Watch virt-manager, VM should be powered on and executing boot sequence thru PXE
-[Imgur](https://i.imgur.com/E53CZ2W.png)
+#Watch virt-manager, VM should be powered on and executing boot sequence thru PXE, then powered off. 
 
-
+![Imgur](https://i.imgur.com/E53CZ2W.png)
 [stack@undercloud ~]$ openstack overcloud node introspect --all-manageable --provide
 Started Mistral Workflow tripleo.baremetal.v1.introspect_manageable_nodes. Execution ID: 3afd8d05-8224-4372-8cde-62256beccd4f
 Waiting for introspection to finish...
@@ -333,23 +332,43 @@ Introspection for UUID f98ea941-dfad-485b-8676-93e6661a1c57 finished successfull
 Introspection for UUID a9b39c4e-a7f8-4064-b432-2845fd3ecea5 finished successfully.
 Introspection for UUID ee5352b0-ce8a-4d5f-b576-b1f6fdf18d0b finished successfully.
 Introspection completed.
+
+#Node list should show state = available.
+[stack@undercloud ~]$ openstack baremetal node list
++-------------------------------+------------------------------+---------------+-------------+--------------------+-------------+
+| UUID                          | Name                         | Instance UUID | Power State | Provisioning State | Maintenance |
++-------------------------------+------------------------------+---------------+-------------+--------------------+-------------+
+| 01613eb8-ce12-4876-a4cd-      | compute_1                    | None          | power off   | available          | False       |
+| 31b193a9929b                  |                              |               |             |                    |             |
+| 04309846-e21c-                | control_2                    | None          | power off   | available          | False       |
+| 4a2e-a621-e72d9a36c2f7        |                              |               |             |                    |             |
+| 5350fa22-51ea-                | contrail-controller_3        | None          | power off   | available          | False       |
+| 472f-b852-2d45342ef18a        |                              |               |             |                    |             |
+| fe2c0afd-94ae-                | contrail-analytics_4         | None          | power off   | available          | False       |
+| 48b6-bf96-a9e875757f87        |                              |               |             |                    |             |
+| 0d31510c-4990-4d17-89b4-de78e | contrail-analyticsdatabase_5 | None          | power off   | available          | False       |
+| 136c498                       |                              |               |             |                    |             |
++-------------------------------+------------------------------+---------------+-------------+--------------------+-------------+
 ```
 
 
 Create OpenStack Flavor
 ```
-#Delete old compute/controller flavor first. Change flavor as desired.
+#Delete old compute/controller flavor first (due to default only 1cpu/2gb RAM. Change flavor as desired.
 openstack flavor delete compute
 openstack flavor delete control
 
 # vim node-profile.sh
-for i in compute control contrail-controller contrail-analytics contrail-database
-contrail-analytics-database; do
+for i in compute control contrail-controller contrail-analytics contrail-database contrail-analytics-database
+do
   openstack flavor create $i --ram 8192 --vcpus 4 --disk 50;
-  openstack flavor set --property "cpu_arch"="x86_64" --property"capabilities:boot_option"="local" --property "capabilities:profile"="${i}" ${i};
+  openstack flavor set --property "cpu_arch"="x86_64" --property "capabilities:boot_option"="local" --property "capabilities:profile"="${i}" ${i};
 done
 
 #Run the script.
+chmod 700 node-profile.sh
+./node-profile.sh
+
 #openstack flavor list
 +--------------------------------------+-----------------------------------------+------+------+-----------+-------+-----------+
 | ID                                   | Name                                    |  RAM | Disk | Ephemeral | VCPUs | Is Public |
@@ -368,4 +387,77 @@ done
 | eb95ea01-41c3-4ee0-8bdf-0920dd51531c | baremetal                               | 4096 |   40 |         0 |     1 | True      |
 +--------------------------------------+-----------------------------------------+------+------+-----------+-------+-----------+
 
+```
 
+Before continue, make sure those return non-zero value
+```
+[stack@undercloud ~]$ nova hypervisor-stats
++----------------------+-------+
+| Property             | Value |
++----------------------+-------+
+| count                | 5     |
+| current_workload     | 0     |
+| disk_available_least | 195   |
+| free_disk_gb         | 195   |
+| free_ram_mb          | 81740 |
+| local_gb             | 195   |
+| local_gb_used        | 0     |
+| memory_mb            | 81740 |
+| memory_mb_used       | 0     |
+| running_vms          | 0     |
+| vcpus                | 20    |
+| vcpus_used           | 0     |
++----------------------+-------+
+[stack@undercloud ~]$ nova hypervisor-list
++----+--------------------------------------+-------+---------+
+| ID | Hypervisor hostname                  | State | Status  |
++----+--------------------------------------+-------+---------+
+| 1  | 04309846-e21c-4a2e-a621-e72d9a36c2f7 | up    | enabled |
+| 2  | 01613eb8-ce12-4876-a4cd-31b193a9929b | up    | enabled |
+| 3  | fe2c0afd-94ae-48b6-bf96-a9e875757f87 | up    | enabled |
+| 4  | 5350fa22-51ea-472f-b852-2d45342ef18a | up    | enabled |
+| 5  | 0d31510c-4990-4d17-89b4-de78e136c498 | up    | enabled |
++----+--------------------------------------+-------+---------+
+```
+
+## Provisioning Overcloud
+###Those are done on 'stack' user on Undercloud VM.
+Install Puppet modules:
+```
+mkdir -p ~/usr/share/openstack-puppet/modules
+git clone https://github.com/Juniper/contrail-tripleo-puppet -b stable/ocata ~/usr/share/openstack-puppet/modules/tripleo
+git clone https://github.com/Juniper/puppet-contrail -b master ~/usr/share/openstack-puppet/modules/contrail
+tar czvf puppet-modules.tgz usr/
+upload-swift-artifacts -f puppet-modules.tgz
+```
+Get Overcloud images
+```
+source ~/stackrc
+sudo yum install rhosp-director-images rhosp-director-images-ipa
+mkdir ~/images
+cd ~/images
+for i in /usr/share/rhosp-director-images/overcloud-full-latest-11.0.tar /usr/share/rhosp-director-images/ironic-python-agent-latest-11.0.tar; do tar -xvf $i; done
+openstack overcloud image upload --image-path /home/stack/images/
+cd ~
+```
+Get Contrail RPM package
+```
+sudo mkdir /var/www/html/contrail
+#Download tgz file on Juniper website, Redhat-Contrail-Networking-4.1.tgz
+sudo tar zxvf contrail-install-packages_4.1.0.0-8-ocata_redhat7.tgz -C /var/www/html/contrail/.
+```
+Install Contrail RPM package from tgz file  (don't know what it's for, since we will get the templates directly from github)
+```
+cd /var/www/html/contrail/
+sudo yum localinstall -y contrail-tripleo-heat-templates-4.1.0.0-8.el7.noarch.rpm 
+```
+
+Get TripleO Heat Templates:
+```
+cp -r /usr/share/openstack-tripleo-heat-templates/ ~/tripleo-heat-templates
+git clone https://github.com/Juniper/contrail-tripleo-heat-templates -b stable/ocata
+cp -r contrail-tripleo-heat-templates/environments/contrail ~/tripleo-heat-templates/environments
+cp -r contrail-tripleo-heat-templates/puppet/services/network/* ~/tripleo-heat-templates/puppet/services/network
+cp -r contrail-tripleo-heat-templates/extraconfig ~/tripleo-heat-templates
+cp -r contrail-tripleo-heat-templates/network ~/tripleo-heat-templates
+```
