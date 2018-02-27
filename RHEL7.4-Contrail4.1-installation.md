@@ -296,6 +296,8 @@ Perform introspection on baremetal node list
 ```
 openstack baremetal configure boot
 for node in $(openstack baremetal node list -c UUID -f value) ; do openstack baremetal node manage $node ; done
+#Ignore this error if show, as long as baremetal node list show 'manageable'
+#The requested action "manage" can not be performed on node "01613eb8-ce12-4876-a4cd-31b193a9929b" while it is in state "manageable". (HTTP 400)
 ```
 ```
 [stack@undercloud ~]$ openstack baremetal node list
