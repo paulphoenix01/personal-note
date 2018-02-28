@@ -461,3 +461,8 @@ cp -r contrail-tripleo-heat-templates/puppet/services/network/* ~/tripleo-heat-t
 cp -r contrail-tripleo-heat-templates/extraconfig ~/tripleo-heat-templates
 cp -r contrail-tripleo-heat-templates/network ~/tripleo-heat-templates
 ```
+
+## Sample template ##
+``` 
+TODO
+```
