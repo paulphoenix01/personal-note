@@ -1,7 +1,7 @@
 ## Installing RHEL 7.4 and OpenStack Platform 11 with Contrail 4.1 
 
-After OS install
-### On Director
+After OS install with GUI and Virtualization enable > Register RHEL > Install another Undercloud VM for Director using KVM..
+### On KVM & Director(Undercloud)
 
 Register Redhat
 ```
