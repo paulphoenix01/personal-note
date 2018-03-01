@@ -1,8 +1,7 @@
 ## Installing RHEL 7.4 and OpenStack Platform 11 with Contrail 4.1 
 
-After OS install with GUI and Virtualization enable > Register RHEL > Install another Undercloud VM for Director using KVM..
-### On KVM & Director(Undercloud)
-
+After OS install with GUI > All Virtualization enable + Security Tools + Developments tools > Register RHEL 
+### On KVM 
 Register Redhat
 ```
 sudo subscription-manager register
@@ -28,48 +27,144 @@ mkdir ~/images
 mkdir ~/templates
 ```
 
-Set hostname and hosts
+Set hostname and hosts (On Undercloud)
 ```
 sudo hostnamectl set-hostname undercloud.jnpr.net
 sudo hostnamectl set-hostname --transient undercloud.jnpr.net
 
 # vim /etc/hosts
-192.168.250.5   undercloud.jnpr.net
+192.168.250.1 undercloud.jnpr.net undercloud
 ```
-Set static IP and gw
+
+On KVM: Set static IP and gw
 ```
 # vim /etc/resolv.conf
 search jnpr.net
-nameserver 192.168.122.1
+nameserver 8.8.8.8
 
-# vim /etc/sysconfig/network-scripts/ifcfg-eth0
-<...>
-TYPE="Ethernet"
-BOOTPROTO="none"
-NAME="eth0"
-DEVICE="eth0"
-ONBOOT="yes"
-IPADDR=192.168.122.111
-NETMASK=255.255.255.0
-GATEWAY=192.168.122.1
-
-# vim /etc/sysconfig/network-scripts/ifcfg-eth1
+# 192.168.250.254 should be NAT -> Internet. Add default gw here if necessary
+# vim /etc/sysconfig/network-scripts/ifcfg-ens192
 <...>
 TYPE=Ethernet
 BOOTPROTO=none
-NAME=eth1
-DEVICE=eth1
+DEFROUTE=yes
+NAME=ens192
+DEVICE=ens192
 ONBOOT=yes
-IPADDR=192.168.250.1
+IPADDR=192.168.250.254
+PREFIX=24
+GATEWAY=<x.x.x.x>
+# vim /etc/sysconfig/network-scripts/ifcfg-ens224
+<...>
+TYPE=Ethernet
+BOOTPROTO=none
+NAME=ens224
+DEVICE=ens224
+ONBOOT=yes
+IPADDR=172.16.250.254
 NETMASK=255.255.255.0
+
+# (Optional) Add 3rd interface if not using NAT.
+<...>
+TYPE="Ethernet"
+BOOTPROTO="none"
+DEFROUTE="yes"
+NAME="ens256"
+DEVICE="ens256"
+ONBOOT="yes"
+IPADDR="10.250.42.9"
+PREFIX="24"
+GATEWAY="10.250.42.1"
+DNS1="8.8.8.8"
+DOMAIN="jnpr.net"
 ```
+
 
 Update and Reboot
 ```
 sudo yum update -y
+sudo yum install -y libguestfs libguestfs-tools openvswitch virt-install kvm libvirt libvirt-python python-virtinst
 sudo reboot
 ```
 
+Start libvirtd and openvswitch for bridge
+```
+ovs-vsctl add-br br0
+ovs-vsctl add-br br1
+ovs-vsctl add-port br0 ens192   <<< Nic #1
+ovs-vsctl add-port br1 ens224   <<< Nic #2
+cat << EOF > br0.xml
+<network>
+  <name>br0</name>
+  <forward mode='bridge'/>
+  <bridge name='br0'/>
+  <virtualport type='openvswitch'/>
+  <portgroup name='overcloud'>
+    <vlan trunk='yes'>
+      <tag id='700' nativeMode='untagged'/>
+      <tag id='710'/>
+      <tag id='720'/>
+      <tag id='730'/>
+      <tag id='740'/>
+      <tag id='750'/>
+    </vlan>
+  </portgroup>
+</network>
+EOF
+cat << EOF > br1.xml
+<network>
+  <name>br1</name>
+  <forward mode='bridge'/>
+  <bridge name='br1'/>
+  <virtualport type='openvswitch'/>
+</network>
+EOF
+virsh net-define br0.xml
+virsh net-start br0
+virsh net-autostart br0
+virsh net-define br1.xml
+virsh net-start br1
+virsh net-autostart br1
+
+## Issue ifconfig and check if br0 and br1 is up. If not use:
+ifconfig br0 up
+ifconfig br1 up
+```
+
+### On 'root'@kvm: Define VMs and run script
+```
+# vim define-vms.sh
+num=0
+for i in compute control contrail-controller contrail-analytics contrail-analytics-database
+do
+  num=$(expr $num + 1)
+  qemu-img create -f qcow2 /var/lib/libvirt/images/${i}_${num}.qcow2 40G
+  virsh define /dev/stdin <<EOF
+$(virt-install --name ${i}_$num --disk /var/lib/libvirt/images/${i}_${num}.qcow2 --vcpus=4 --ram=16348 --network network=br0,model=virtio,portgroup=overcloud --network network=br1,model=virtio --virt-type kvm --import --os-variant rhel7 --serial pty --console pty,target_type=virtio --print-xml)
+EOF
+done
+```
+### Get provisioning interface mac addresses for ironic PXE
+```
+# vim get-ironic-mac.sh
+num=0
+for i in compute control contrail-controller contrail-analytics contrail-analytics-database
+do
+  num=$(expr $num + 1)
+  prov_mac=`virsh domiflist ${i}_${num}|grep br0|awk '{print $5}'`
+  echo ${prov_mac} ${i}_${num} 192.168.250.254 ${i} >> ironic_list.txt
+done
+```
+```
+# Output file would be: (without space and title) 
+MAC_ADDRESS       VM_DOMAIN_NAME                br0_KVM_IP(for undercloud power_mgnt)    Profile_Role
+52:54:00:5d:c7:41 compute_1                     192.168.250.254                          compute
+52:54:00:c4:82:82 control_2                     192.168.250.254                          control
+52:54:00:92:fe:3c contrail-controller_3         192.168.250.254                          contrail-controller
+52:54:00:7b:c5:e2 contrail-analytics_4          192.168.250.254                          contrail-analytics
+52:54:00:23:2e:88 contrail-analytics-database_5 192.168.250.254                          contrail-analytics-database
+```
+# On Undercloud
 Configuring Undercloud, with 'stack' user
 ```
 sudo yum install -y python-tripleoclient
