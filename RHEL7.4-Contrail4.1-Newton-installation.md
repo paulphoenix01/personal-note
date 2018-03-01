@@ -1,7 +1,7 @@
 ## Installing RHEL 7.4 and OpenStack Platform 11 with Contrail 4.1 
 
 After OS install with GUI > All Virtualization enable + Security Tools + Developments tools > Register RHEL 
-### On KVM 
+### On KVM & Undercloud VM
 Register Redhat
 ```
 sudo subscription-manager register
@@ -33,9 +33,8 @@ sudo hostnamectl set-hostname undercloud.jnpr.net
 sudo hostnamectl set-hostname --transient undercloud.jnpr.net
 
 # vim /etc/hosts
-192.168.250.1 undercloud.jnpr.net undercloud
+192.168.250.5 undercloud.jnpr.net undercloud
 ```
-
 On KVM: Set static IP and gw
 ```
 # vim /etc/resolv.conf
@@ -64,6 +63,20 @@ ONBOOT=yes
 IPADDR=172.16.250.254
 NETMASK=255.255.255.0
 
+# vim /etc/sysconfig/network-scripts/ifcfg-br0
+DEVICE=br0
+ONBOOT=yes
+DEVICETYPE=ovs
+TYPE=OVSBridge
+BOOTPROTO=none
+
+# vim /etc/sysconfig/network-scripts/ifcfg-br1
+DEVICE=br1
+ONBOOT=yes
+DEVICETYPE=ovs
+TYPE=OVSBridge
+BOOTPROTO=none
+
 # (Optional) Add 3rd interface if not using NAT.
 <...>
 TYPE="Ethernet"
@@ -89,6 +102,11 @@ sudo reboot
 
 Start libvirtd and openvswitch for bridge
 ```
+systemctl start libvirtd
+systemctl start openvswitch
+systemctl enable libvirtd
+systemctl enable openvswitch
+
 ovs-vsctl add-br br0
 ovs-vsctl add-br br1
 ovs-vsctl add-port br0 ens192   <<< Nic #1
@@ -165,6 +183,7 @@ MAC_ADDRESS       VM_DOMAIN_NAME                br0_KVM_IP(for undercloud power_
 52:54:00:23:2e:88 contrail-analytics-database_5 192.168.250.254                          contrail-analytics-database
 ```
 # On Undercloud
+
 Configuring Undercloud, with 'stack' user
 ```
 sudo yum install -y python-tripleoclient
