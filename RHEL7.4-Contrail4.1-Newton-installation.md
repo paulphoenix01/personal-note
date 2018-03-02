@@ -97,6 +97,7 @@ Update and Reboot
 ```
 sudo yum update -y
 sudo yum install -y libguestfs libguestfs-tools openvswitch virt-install kvm libvirt libvirt-python python-virtinst
+yum install qemu-kvm qemu-img libvirt virt-install libvirt-client libvirt-python
 sudo reboot
 ```
 
